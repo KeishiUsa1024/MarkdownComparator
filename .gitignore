@@ -1,0 +1,6 @@
+# Ignore directories
+base/
+input/
+result/
+.git/
+__pycache__/

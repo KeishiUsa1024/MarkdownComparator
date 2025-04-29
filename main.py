@@ -4,8 +4,15 @@ from datetime import datetime
 from typing import List, Dict
 from parser import parse_markdown_table
 from comparator import parse_and_compare, compare_tables
-from reporter import generate_report, qualitative_diff
+from reporter import generate_report, qualitative_diff, ReportData
 
+# Markdownテーブルの概要を取得する関数
+# 引数:
+#   md: Markdownコンテンツ
+#   header: テーブルのヘッダー
+#   rows: テーブルの行データ
+# 戻り値:
+#   テーブルの概要を含む辞書
 def table_overview(md: str, header: List[str], rows: List[List[str]]) -> Dict:
     char_count = len(md)
     element_count = sum(len(row) for row in rows)
@@ -17,6 +24,11 @@ def table_overview(md: str, header: List[str], rows: List[List[str]]) -> Dict:
         "col_names": header,
     }
 
+# 指定されたディレクトリ内のMarkdownファイルを再帰的に検索する関数
+# 引数:
+#   root: 検索を開始するディレクトリのパス
+# 戻り値:
+#   見つかったMarkdownファイルの相対パスのリスト
 def find_md_files_recursive(root):
     md_files = []
     for dirpath, _, filenames in os.walk(root):
@@ -27,6 +39,8 @@ def find_md_files_recursive(root):
                 md_files.append(rel_path)
     return md_files
 
+# メイン処理を実行する関数
+# baseディレクトリのMarkdownファイルを基準に、inputディレクトリ内のファイルと比較し、結果をresultディレクトリに出力する
 def main():
     base_dir = os.path.join(os.path.dirname(__file__), "base")
     input_dir = os.path.join(os.path.dirname(__file__), "input")
@@ -66,7 +80,22 @@ def main():
 
         col_results = compare_tables(header1, rows1, header2, rows2)
         style_diff, cell_examples = qualitative_diff(md1, md2, header1, header2, rows1, rows2, col_results)
-        report = generate_report(md1, md2, overview1, overview2, col_results, style_diff, cell_examples, fname, fname, completed, rows1, header1)
+        # ReportDataオブジェクトを作成してgenerate_report関数を呼び出す
+        report_data = ReportData(
+            md1=md1,
+            md2=md2,
+            overview1=overview1,
+            overview2=overview2,
+            col_results=col_results,
+            style_diff=style_diff,
+            cell_examples=cell_examples,
+            file1=fname,
+            file2=fname,
+            completed=completed,
+            rows1=rows1,
+            header1=header1
+        )
+        report = generate_report(report_data)
         # 出力先パス
         out_dir = os.path.join(result_dir, os.path.dirname(rel_path))
         os.makedirs(out_dir, exist_ok=True)
